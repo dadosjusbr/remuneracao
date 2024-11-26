@@ -14,6 +14,7 @@ import (
 	"github.com/gocarina/gocsv"
 	"github.com/labstack/echo/v4"
 	"github.com/newrelic/go-agent/v3/newrelic"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
 
@@ -829,6 +830,7 @@ func (h handler) GetAnnualSummary(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, fmt.Sprintf("Algo deu errado ao tentar coletar os dados anuais do orgao=%s", agencyName))
 	}
 	var annualData []annualSummaryData
+	var t *timestamppb.Timestamp
 	for _, s := range summaries {
 		baseRemPerMonth := s.BaseRemuneration / float64(s.NumMonthsWithData)
 		baseRemPerCapita := s.BaseRemunerationPerCapita
@@ -871,6 +873,9 @@ func (h handler) GetAnnualSummary(c echo.Context) error {
 			},
 			ItemSummary: itemSummary,
 		})
+		if s.Timestamp.AsTime().After(t.AsTime()) {
+			t = s.Timestamp
+		}
 	}
 	var collect []collecting
 	var hasData bool
@@ -880,6 +885,11 @@ func (h handler) GetAnnualSummary(c echo.Context) error {
 			Description: c.Description,
 		})
 		hasData = c.Collecting
+	}
+
+	crawlingTimestamp := timestamp{
+		Seconds: t.GetSeconds(),
+		Nanos:   t.GetNanos(),
 	}
 	annualSum := annualSummary{
 		Agency: &agency{
@@ -894,7 +904,8 @@ func (h handler) GetAnnualSummary(c echo.Context) error {
 			OmbudsmanURL:  strAgency.OmbudsmanURL,
 			HasData:       hasData,
 		},
-		Data: annualData,
+		Data:              annualData,
+		CrawlingTimestamp: crawlingTimestamp,
 	}
 	return c.JSON(http.StatusOK, annualSum)
 }

@@ -1431,6 +1431,10 @@ func (g getAnnualSummary) testWhenDataExists(t *testing.T) {
 				"ouvidoria": "http://www.tjal.jus.br/ombudsman",
 				"url": "example.com/v2/orgao/tjal"
 			},
+			"timestamp": {
+				"nanos":0, 
+				"seconds":0
+			},
 			"dados_anuais": [
 				{
 					"ano": 2020,
@@ -1598,6 +1602,10 @@ func (g getAnnualSummary) testWhenAgencyDoesNotHaveData(t *testing.T) {
 				"twitter_handle": "tjaloficial",
 				"ouvidoria": "http://www.tjal.jus.br/ombudsman",
 				"url": "example.com/v2/orgao/tjal"
+			},
+			"timestamp": {
+				"nanos":0, 
+				"seconds":0
 			}
 		}
 	`
