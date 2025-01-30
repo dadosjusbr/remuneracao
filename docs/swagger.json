@@ -478,6 +478,58 @@
                 }
             }
         },
+        "/uiapi/v2/readme": {
+            "get": {
+                "description": "Retorna um README sobre o pacote de dados",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ui_api"
+                ],
+                "operationId": "DownloadReadme",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ano a ser filtrado",
+                        "name": "ano",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Mês a ser filtrado",
+                        "name": "mes",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Orgão a ser filtrado",
+                        "name": "orgao",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Parâmetro ano/mês inválido",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Algo deu errado ao retornar o README",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/v2/dados/{orgao}": {
             "get": {
                 "description": "Busca todas as informações de um órgão específico.",

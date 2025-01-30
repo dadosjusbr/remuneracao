@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -801,6 +802,88 @@ func (h handler) DownloadByUrl(c echo.Context) error {
 	err = gocsv.Marshal(searchResults, c.Response().Writer)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, fmt.Errorf("erro tentando fazer download do csv: %q", err))
+	}
+	return nil
+}
+
+//	@ID				DownloadReadme
+//	@Tags			ui_api
+//	@Description	Retorna um README sobre o pacote de dados
+//	@Produce		json
+//	@Param			ano		query		string		false	"Ano a ser filtrado"
+//	@Param			mes		query		string		false	"Mês a ser filtrado"
+//	@Param			orgao	query		string		false	"Orgão a ser filtrado"
+//	@Success		200		{string}	text/plain	"Requisição bem sucedida."
+//	@Failure		400		{string}	string		"Parâmetro ano/mês inválido"
+//	@Failure		500		{string}	string		"Algo deu errado ao retornar o README"
+//	@Router			/uiapi/v2/readme [get]
+func (h handler) DownloadReadme(c echo.Context) error {
+	readmeFile := "uiapi/readme_content.txt"
+	year := c.QueryParam("ano")
+	month := c.QueryParam("mes")
+	agency := c.QueryParam("orgao")
+	yearInt := 0
+	monthInt := 0
+	var err error
+
+	if agency != "" {
+		// Verificamos se ano e mês foram informados e se são válidos (convertemos para inteiro)
+		if year != "" {
+			yearInt, err = strconv.Atoi(year)
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, fmt.Sprintf("Parâmetro ANO inválido: %s.", year))
+			}
+			if month != "" {
+				monthInt, err = strconv.Atoi(month)
+				if err != nil {
+					return c.JSON(http.StatusBadRequest, fmt.Sprintf("Parâmetro MÊS inválido: %s.", month))
+				}
+			}
+		}
+		var results []*string
+		if results, err = h.client.Db.GetNotices(agency, yearInt, monthInt); err != nil {
+			return c.JSON(http.StatusInternalServerError, fmt.Errorf("erro coletando os avisos: %q", err))
+		}
+		// Filtrar nulos e converter para []string
+		var cleanResults []string
+		for _, s := range results {
+			if s != nil {
+				cleanResults = append(cleanResults, *s)
+			}
+		}
+
+		var newLines string
+		if len(cleanResults) != 0 {
+			newLines = strings.Join(cleanResults, "\n")
+		} else {
+			newLines = "Não identificamos potenciais falhas na origem destes dados."
+		}
+
+		originalContent, err := os.ReadFile(readmeFile)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, fmt.Errorf("erro ao ler o readme original: %q", err))
+		}
+		// Adicionar as novas linhas ao conteúdo original
+		updatedContent := "\n**Observações sobre este conjunto de dados**:\n\n" +
+			newLines +
+			" Em sua análise, esteja atento a possíveis valores estranhos.\n\n"
+
+		// Organizando para que seja o 2º tópico
+		newContent := append(originalContent[:1733], append([]byte(updatedContent), originalContent[1734:]...)...)
+
+		// Gravar o conteúdo atualizado no arquivo temporário
+		readmeFile = "readme_atualizado.txt"
+		err = os.WriteFile(readmeFile, newContent, 0644)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, fmt.Errorf("erro ao gravar o arquivo temporário: %q", err))
+		}
+		defer os.Remove(readmeFile)
+	}
+
+	c.Response().Header().Set("Content-Disposition", "attachment; filename=README.txt")
+	c.Response().Header().Set("Content-Type", "text/plain")
+	if err := c.File(readmeFile); err != nil {
+		return c.JSON(http.StatusInternalServerError, fmt.Errorf("erro tentando fazer download do readme: %q", err))
 	}
 	return nil
 }

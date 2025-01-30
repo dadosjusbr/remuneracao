@@ -192,6 +192,7 @@ func main() {
 	uiAPIGroup.GET("/v2/pesquisar", uiApiHandler.SearchByUrl)
 	// Baixa um conjunto de dados a partir de filtros informados por query params
 	uiAPIGroup.GET("/v2/download", uiApiHandler.DownloadByUrl)
+	uiAPIGroup.GET("/v2/readme", uiApiHandler.DownloadReadme)
 
 	apiHandler := papi.NewHandler(pgS3Client, conf.DadosJusURL, conf.PackageRepoURL)
 	// Public API configuration

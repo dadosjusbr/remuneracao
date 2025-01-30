@@ -974,6 +974,40 @@ paths:
             type: string
       tags:
       - ui_api
+  /uiapi/v2/readme:
+    get:
+      description: Retorna um README sobre o pacote de dados
+      operationId: DownloadReadme
+      parameters:
+      - description: Ano a ser filtrado
+        in: query
+        name: ano
+        type: string
+      - description: Mês a ser filtrado
+        in: query
+        name: mes
+        type: string
+      - description: Orgão a ser filtrado
+        in: query
+        name: orgao
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Parâmetro ano/mês inválido
+          schema:
+            type: string
+        "500":
+          description: Algo deu errado ao retornar o README
+          schema:
+            type: string
+      tags:
+      - ui_api
   /v2/dados/{orgao}:
     get:
       description: Busca todas as informações de um órgão específico.
